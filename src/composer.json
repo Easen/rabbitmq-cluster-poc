@@ -1,0 +1,5 @@
+{
+    "require": {
+        "react/stomp": "0.1.*"
+    }
+}
