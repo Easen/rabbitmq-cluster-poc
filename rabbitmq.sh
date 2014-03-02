@@ -16,6 +16,7 @@ rabbitmq-plugins enable rabbitmq_management
 rabbitmq-plugins enable rabbitmq_jsonrpc
 rabbitmq-plugins enable rabbitmq_federation
 rabbitmq-plugins enable rabbitmq_federation_management
+rabbitmq-plugins enable rabbitmq_stomp
 service rabbitmq-server start
 
 rabbitmq-plugins list
