@@ -38,13 +38,13 @@ Vagrant.configure("2") do |config|
     end
   end
 
-  config.vm.define :worker do |worker_config|
-    worker_config.vm.box = box
-    worker_config.vm.network :private_network, ip: "192.168.64.20"
-    worker_config.vm.provision :shell, :path => "worker.sh"
-    worker_config.vm.hostname = 'worker'
-    worker_config.vm.synced_folder "src/", "/srv/"
-  end
+#  config.vm.define :worker do |worker_config|
+#    worker_config.vm.box = box
+#    worker_config.vm.network :private_network, ip: "192.168.64.20"
+#    worker_config.vm.provision :shell, :path => "worker.sh"
+#    worker_config.vm.hostname = 'worker'
+#    worker_config.vm.synced_folder "src/", "/srv/"
+#  end
 
 
 end

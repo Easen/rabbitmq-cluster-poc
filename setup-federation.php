@@ -101,6 +101,6 @@ executeCommand(sprintf(
 
 
 executeCommand(sprintf(
-    'sudo rabbitmqctl set_policy federate-me "^amq\.topic" \'{"federation-upstream-set":"test"}\''
+    'sudo rabbitmqctl set_policy federate-me "^amq\." \'{"federation-upstream-set":"test"}\''
 ));
 
