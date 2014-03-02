@@ -7,7 +7,7 @@ apt-key add rabbitmq-signing-key-public.asc
 
 apt-get update
 
-apt-get install -q -y screen htop vim curl wget
+apt-get install -q -y screen htop vim curl wget php5-cli
 apt-get install -q -y rabbitmq-server
 
 # RabbitMQ Plugins
