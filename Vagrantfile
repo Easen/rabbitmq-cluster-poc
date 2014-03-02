@@ -33,7 +33,7 @@ Vagrant.configure("2") do |config|
       rabbit_config.vm.hostname = node[:name]
       rabbit_config.vm.synced_folder "src/", "/srv/"
 
-      rabbit_config.vm.provision :shell, :path => "src/setup-federation.php"
+      rabbit_config.vm.provision :shell, :path => "setup-federation.php"
 
     end
   end
