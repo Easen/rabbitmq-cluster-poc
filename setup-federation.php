@@ -42,32 +42,23 @@ function executeCommand($command) {
 }
 
 $currentHost = gethostname();
-
 $federationUpstream = array();
 
+foreach ($ipMapping as $host => $ip) {
+    executeCommand(sprintf("sudo echo '$ip\t$host' >> /etc/hosts"));
+}
+
 foreach ($groups as $name => $collection) {
-    if (in_array($currentHost, $collection)) {
-        foreach ($collection as $host) {
-            if ($host === $currentHost) {
-                continue;
-            }
-            
-            $settings = array(
-                'uri' => 'amqp://' . $ipMapping[$host],
-                'max-hops' => 1
-            );
-            
-            executeCommand(sprintf(
-                'sudo rabbitmqctl set_parameter federation-upstream %s \'%s\'', 
-                $host, 
-                json_encode($settings)
-            ));
-            
-            $federationUpstream[] = array(
-                'upstream' => $host,
-                'max-hops' => 1
-            );
-        }
+    if (in_array($currentHost, $collection) && $currentHost !== $collection[0]) {
+        
+        executeCommand('sudo rabbitmqctl stop_app');
+        
+        executeCommand(sprintf(
+            'sudo rabbitmqctl join_cluster rabbit@%s', 
+            $collection[0]
+        ));
+        
+        executeCommand('sudo rabbitmqctl start_app');
     }
 }
 if (array_key_exists($currentHost, $upstreamFailover)) {

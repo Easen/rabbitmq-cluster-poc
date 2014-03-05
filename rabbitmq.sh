@@ -10,8 +10,14 @@ apt-get update
 apt-get install -q -y screen htop vim curl wget php5-cli
 apt-get install -q -y rabbitmq-server
 
+
 # RabbitMQ Plugins
 service rabbitmq-server stop
+
+echo 'AnyAlphaNumericStringWillDo' > /var/lib/rabbitmq/.erlang.cookie
+pkill beam
+pkill epmd
+
 rabbitmq-plugins enable rabbitmq_management
 rabbitmq-plugins enable rabbitmq_jsonrpc
 rabbitmq-plugins enable rabbitmq_federation
