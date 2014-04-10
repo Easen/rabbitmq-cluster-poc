@@ -27,14 +27,17 @@ $groups = array(
     ),
 );
 
-$failover = array(
-    'rabbit1' => 'rabbit5',
-    'rabbit2' => 'rabbit6',
-    'rabbit3' => 'rabbit7',
-    'rabbit4' => 'rabbit8',
+$upstreamFailover = array(
+    'rabbit1' => array('rabbit5', 'rabbit6', 'rabbit7', 'rabbit8'),
+    'rabbit2' => array('rabbit5', 'rabbit6', 'rabbit7', 'rabbit8'),
+    'rabbit3' => array('rabbit5', 'rabbit6', 'rabbit7', 'rabbit8'),
+    'rabbit4' => array('rabbit5', 'rabbit6', 'rabbit7', 'rabbit8'),
+    
+    'rabbit5' => array('rabbit1', 'rabbit2', 'rabbit3', 'rabbit4'),
+    'rabbit6' => array('rabbit1', 'rabbit2', 'rabbit3', 'rabbit4'),
+    'rabbit7' => array('rabbit1', 'rabbit2', 'rabbit3', 'rabbit4'),
+    'rabbit8' => array('rabbit1', 'rabbit2', 'rabbit3', 'rabbit4'),
 );
-
-$upstreamFailover = array_flip($failover);
 
 function executeCommand($command) {
     echo $command . PHP_EOL;
@@ -47,6 +50,11 @@ $federationUpstream = array();
 foreach ($ipMapping as $host => $ip) {
     executeCommand(sprintf("sudo echo '$ip\t$host' >> /etc/hosts"));
 }
+
+executeCommand(sprintf(
+    'sudo rabbitmqctl set_cluster_name %s', 
+    json_encode($currentHost)
+));
 
 foreach ($groups as $name => $collection) {
     if (in_array($currentHost, $collection) && $currentHost !== $collection[0]) {
@@ -62,36 +70,33 @@ foreach ($groups as $name => $collection) {
     }
 }
 if (array_key_exists($currentHost, $upstreamFailover)) {
+    if (!is_array($upstreamFailover[$currentHost])) {
+        $upstreamFailover[$currentHost] = array($upstreamFailover[$currentHost]);
+    } 
+    
+    
+    
+    $uris = array();
+    foreach ($upstreamFailover[$currentHost] as $uriHost) {
+        $uris[] = 'amqp://' . $ipMapping[$uriHost];
+    }
     $settings = array(
-        'uri' => 'amqp://' . $ipMapping[$upstreamFailover[$currentHost]],
-        'max-hops' => 2
+        'uri' => $uris,
+        'max-hops' => 1
     );
 
     executeCommand(sprintf(
-        'sudo rabbitmqctl set_parameter federation-upstream %s \'%s\'', 
-        $upstreamFailover[$currentHost], 
+        'sudo rabbitmqctl set_parameter federation-upstream upstream \'%s\'', 
         json_encode($settings)
     ));
 
     $federationUpstream[] = array(
         'upstream' => $upstreamFailover[$currentHost],
-        'max-hops' => 2
+        'max-hops' => 1
     );
 }
 
 executeCommand(sprintf(
-    'sudo rabbitmqctl set_parameter federation-upstream-set test \'%s\'', 
-    json_encode($federationUpstream)
-));
-
-
-executeCommand(sprintf(
-    'sudo rabbitmqctl set_parameter federation local-nodename \'%s\'', 
-    json_encode($currentHost)
-));
-
-
-executeCommand(sprintf(
-    'sudo rabbitmqctl set_policy federate-me "^amq\." \'{"federation-upstream-set":"test"}\''
+    'sudo rabbitmqctl set_policy --apply-to exchanges federate-me "^amq\." \'{"federation-upstream-set":"all"}\''
 ));
 
