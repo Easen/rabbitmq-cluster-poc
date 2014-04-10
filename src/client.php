@@ -1,5 +1,7 @@
 <?php
 
+ini_set('default_socket_timeout', 1);
+
 require_once 'vendor/autoload.php';
 
 $loop = React\EventLoop\Factory::create();
@@ -16,15 +18,25 @@ $ipMapping = array(
     'rabbit8' => '192.168.40.17',
 );
 
+$count = 0;
 foreach($ipMapping as $name => $ip) {
+    $count++;
     try {
         $client = $factory->createClient(array('host' => $ip));
 
         $client->connect()
             ->then(
-                function ($client) use ($loop, $name) {
+                function ($client) use ($loop, $name, $ip, $count, $ipMapping) {
                     $client->subscribe('/topic/foo.#', function ($frame) use ($name) {
                         echo "[$name] Message received: {$frame->body}\n";
+                    });
+ 
+                    $loop->addTimer($count / 2, function () use ($client, $loop, $ip, $name, $ipMapping) {
+                        $loop->addPeriodicTimer(count($ipMapping) / 2, function () use ($client, $ip, $name) {
+                            $msg = microtime(true);
+                            $client->send('/topic/foo.test', $msg);
+                            printf("Sent [%s] to %s (%s)\n", $msg, $name, $ip);
+                        });
                     });
                 },
                 function ($reason) {
@@ -36,18 +48,6 @@ foreach($ipMapping as $name => $ip) {
     }
         
 }
-
-
-$client = $factory->createClient(array('host' => $argv[1]));
-$client
-    ->connect()
-    ->then(function ($client) use ($loop) {
-        $loop->addPeriodicTimer(3, function () use ($client) {
-            
-            $client->send('/topic/foo.test', 'le message');
-            echo "Sent Le Message\n";
-        });
-    });
 
 
 $loop->run();
